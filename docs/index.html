@@ -5,19 +5,16 @@
     <title>Cube Jumper - Essential Edition</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;900&display=swap');
-        
         body { margin: 0; overflow: hidden; background: #0a0a0a; font-family: 'Outfit', sans-serif; color: #fff; }
         
-        /* UI DE JEU */
         #ui { position: absolute; top: 30px; left: 30px; z-index: 100; }
         .score { font-size: 60px; font-weight: 900; line-height: 1; }
         .vault { color: #00e5ff; font-size: 14px; margin-top: 10px; letter-spacing: 2px; }
         
-        /* PANNEAU PREMIUM */
         #premium-lock {
             position: absolute; top: 30px; right: 30px; padding: 15px;
             border: 1px solid rgba(255,215,0,0.3); background: rgba(0,0,0,0.8);
-            text-align: right; border-radius: 4px; transition: 0.5s; z-index: 100;
+            text-align: right; border-radius: 4px; z-index: 100;
         }
         .lock-title { color: #ffd700; font-size: 10px; letter-spacing: 2px; font-weight: 900; }
         .btn-premium { 
@@ -25,44 +22,31 @@
             border: none; font-weight: 900; cursor: pointer; display: none;
             animation: pulse 1.5s infinite;
         }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); box-shadow: 0 0 20px #ffd700; }
-            100% { transform: scale(1); }
-        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); box-shadow: 0 0 20px #ffd700; } 100% { transform: scale(1); } }
 
-        /* ÉCRAN GAME OVER ESSENTIAL */
         #death-screen {
-            position: fixed; inset: 0; background: rgba(10, 10, 10, 0.9);
+            position: fixed; inset: 0; background: rgba(10, 10, 10, 0.95);
             display: none; flex-direction: column; align-items: center; justify-content: center;
             z-index: 5000; backdrop-filter: blur(5px);
         }
         .death-msg { font-size: 12px; letter-spacing: 10px; color: #ff0055; margin-bottom: 10px; }
         .final-score { font-size: 120px; font-weight: 900; margin-bottom: 30px; }
-        .restart-btn { 
-            padding: 15px 40px; background: #fff; color: #000; border: none; 
-            font-weight: 900; cursor: pointer; letter-spacing: 3px; 
-        }
+        .restart-btn { padding: 15px 40px; background: #fff; color: #000; border: none; font-weight: 900; cursor: pointer; letter-spacing: 3px; }
 
-        /* FLASH DE DÉBLOCAGE */
         #unlock-flash { position: fixed; inset: 0; background: white; opacity: 0; pointer-events: none; z-index: 9999; }
     </style>
 </head>
 <body>
-
     <div id="unlock-flash"></div>
-
     <div id="ui">
         <div class="score" id="score">0</div>
         <div class="vault">VAULT: <span id="bank-val">0</span> Q</div>
     </div>
-
     <div id="premium-lock">
         <div id="lock-status" class="lock-title">PREMIUM_STATUS: LOCKED</div>
         <div id="progress" style="font-size: 12px; margin-top:5px;">PROGRESS: 0%</div>
-        <button id="btn-up" class="btn-premium" onclick="window.location.href='premium.html'">ACCESS PREMIUM</button>
+        <button id="btn-up" class="btn-premium" onclick="window.location.href='https://clebinet.github.io/cube-jumper-premium'">ACCESS PREMIUM</button>
     </div>
-
     <div id="death-screen">
         <div class="death-msg">SESSION TERMINATED</div>
         <div id="final-score" class="final-score">0</div>
@@ -72,7 +56,6 @@
     <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }</script>
     <script type="module">
         import * as THREE from 'three';
-        
         const KEY = 'qubits_prestige_v2';
         let bank = parseInt(localStorage.getItem(KEY)) || 0;
         let hasJustUnlocked = false;
@@ -81,7 +64,6 @@
             document.getElementById('bank-val').innerText = bank.toLocaleString();
             let prog = Math.min(100, (bank / 100000) * 100);
             document.getElementById('progress').innerText = `PROGRESS: ${prog.toFixed(1)}%`;
-            
             if(bank >= 100000) {
                 document.getElementById('btn-up').style.display = 'block';
                 document.getElementById('lock-status').innerText = "PREMIUM_STATUS: UNLOCKED";
@@ -89,13 +71,11 @@
                 if(!hasJustUnlocked) { triggerUnlockEffect(); hasJustUnlocked = true; }
             }
         };
-
         function triggerUnlockEffect() {
             const flash = document.getElementById('unlock-flash');
             flash.style.opacity = "1";
             setTimeout(() => { flash.style.transition = "opacity 2s"; flash.style.opacity = "0"; }, 50);
         }
-
         updateUI();
 
         const scene = new THREE.Scene();
@@ -108,66 +88,41 @@
 
         const grid = new THREE.GridHelper(200, 40, 0x444444, 0x222222);
         scene.add(grid);
-
         const player = new THREE.Mesh(new THREE.BoxGeometry(0.8,0.8,0.8), new THREE.MeshStandardMaterial({ color: 0x00e5ff }));
-        player.position.y = 0.4;
-        scene.add(player);
-
+        player.position.y = 0.4; scene.add(player);
         const enemy = new THREE.Mesh(new THREE.BoxGeometry(3,1,1), new THREE.MeshStandardMaterial({ color: 0xff0055 }));
-        enemy.position.z = -60;
-        scene.add(enemy);
-
+        enemy.position.z = -60; scene.add(enemy);
         scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-        const light = new THREE.PointLight(0xffffff, 20);
-        scene.add(light);
+        const light = new THREE.PointLight(0xffffff, 20); scene.add(light);
 
         let score = 0, speed = 0.6, isDead = false, jumping = false, jumpVel = 0;
-        const pBox = new THREE.Box3();
-        const eBox = new THREE.Box3();
-
         window.addEventListener('keydown', (e) => { if(e.code === 'Space' && !jumping && !isDead) { jumping = true; jumpVel = 0.5; }});
         window.addEventListener('touchstart', () => { if(!jumping && !isDead) { jumping = true; jumpVel = 0.5; }});
 
         function animate() {
             if(isDead) return;
             requestAnimationFrame(animate);
-
             if(jumping) {
                 player.position.y += jumpVel; jumpVel -= 0.03;
                 if(player.position.y <= 0.4) { player.position.y = 0.4; jumping = false; }
             }
-
             enemy.position.z += speed; grid.position.z += speed;
             if(grid.position.z > 5) grid.position.z = 0;
-
             if(enemy.position.z > 15) {
                 enemy.position.z = -70; score++; bank += 50;
                 localStorage.setItem(KEY, bank); updateUI();
                 document.getElementById('score').innerText = score;
                 speed += 0.01;
             }
-
-            pBox.setFromObject(player);
-            eBox.setFromObject(enemy);
-            // Épaisseur hitbox pour éviter que l'ennemi traverse le joueur
-            eBox.expandByVector(new THREE.Vector3(0, 0, speed));
-
-            if(pBox.intersectsBox(eBox)) {
+            if(new THREE.Box3().setFromObject(player).intersectsBox(new THREE.Box3().setFromObject(enemy).expandByVector(new THREE.Vector3(0,0,speed)))) {
                 isDead = true;
-                showGameOver();
+                document.getElementById('ui').style.display = 'none';
+                document.getElementById('premium-lock').style.display = 'none';
+                document.getElementById('final-score').innerText = score;
+                document.getElementById('death-screen').style.display = 'flex';
             }
-
-            light.position.copy(player.position).y += 2;
-            renderer.render(scene, camera);
+            light.position.copy(player.position).y += 2; renderer.render(scene, camera);
         }
-
-        function showGameOver() {
-            document.getElementById('ui').style.display = 'none';
-            document.getElementById('premium-lock').style.display = 'none';
-            document.getElementById('final-score').innerText = score;
-            document.getElementById('death-screen').style.display = 'flex';
-        }
-
         animate();
     </script>
 </body>
